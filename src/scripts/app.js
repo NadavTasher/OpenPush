@@ -1,3 +1,7 @@
+function load() {
+    Notifier.init(30);
+}
+
 function generate() {
     token((token) => {
         let URL = window.location.origin + "/apis/notify/?api=" + (JSON.stringify({
