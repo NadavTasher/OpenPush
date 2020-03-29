@@ -63,7 +63,7 @@ class Notify
                         // Notify the user
                         Notifier::notify($userID, "You just allowed \"" . $parameters->application . "\" to send you notifications.");
                         // Issue the token
-                        return self::$authority->issue($tokenObject, [self::PERMISSION_NOTIFY]);
+                        return self::$authority->issue($tokenObject, [self::PERMISSION_NOTIFY], 60 * 60 * 24 * 365);
                     }
                     return [false, "Authentication failure"];
                 }
