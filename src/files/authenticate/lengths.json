@@ -1,0 +1,5 @@
+{
+  "salt": 512,
+  "session": 512,
+  "password": 8
+}

@@ -1,0 +1,8 @@
+{
+  "issuing": [
+    "authenticate"
+  ],
+  "validating": [
+    "authenticate"
+  ]
+}

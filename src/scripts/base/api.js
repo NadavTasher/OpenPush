@@ -115,11 +115,11 @@ class API {
         // Make sure the API isn't already compiled in the API list
         if (!(APIs["apis"].hasOwnProperty(api) || APIs["callbacks"].hasOwnProperty(api))) {
             // Make sure none are null
-            if (api !== null && action !== null && parameters !== null) {
+            if (api !== null) {
                 // Compile API
                 APIs["apis"][api] = {
-                    action: action,
-                    parameters: parameters
+                    action: action || null,
+                    parameters: parameters || null
                 };
                 // Compile callback
                 APIs["callbacks"][api] = callback;

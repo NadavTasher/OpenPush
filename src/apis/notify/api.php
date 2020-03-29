@@ -47,7 +47,7 @@ class Notify
         // Init API
         self::init();
         // Return the result
-        return Base::handle(Notifier::API, function ($action, $parameters) {
+        return Base::handle(self::API, function ($action, $parameters) {
             // Initialize the notifier
             Notifier::init();
             // Switch action
@@ -75,7 +75,7 @@ class Notify
                     // Check result
                     if ($validation[0]) {
                         // User ID from token
-                        $userID = $validation[1]->userID;
+                        $userID = $validation[1]->id;
                         // Check inputs
                         $title = "Message from " . $validation[1]->application;
                         $message = null;

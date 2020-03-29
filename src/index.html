@@ -16,7 +16,7 @@
     <meta name="theme-color" content="#f2ffe6"/>
     <!-- Mobile Safari -->
     <meta name="apple-mobile-web-app-capable" content="yes"/>
-    <meta name="apple-mobile-web-app-title" content="Notifier"/>
+    <meta name="apple-mobile-web-app-title" content="OpenPush"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
     <!-- Icons -->
     <link rel="icon" href="images/icons/icon.png"/>
@@ -32,11 +32,11 @@
     <script type="text/javascript" src="scripts/notifier/api.js"></script>
     <script type="text/javascript" src="scripts/authenticate/api.js"></script>
     <!-- App Title -->
-    <title>Notifier</title>
+    <title>OpenPush</title>
     <!-- No Script -->
     <noscript></noscript>
 </head>
-<body onload="window.prepare(()=>Authenticate.authentication(load))" column>
+<body onload="window.prepare(()=>Authenticate.authentication())" column>
 <div id="authenticate" column>
     <p style="font-size: 5vh;">Welcome to Notifier</p>
     <p style="font-size: 3vh;" id="authenticate-output">Please authenticate to continue.</p>
@@ -44,8 +44,8 @@
         <input id="authenticate-name" type="text" placeholder="Name"/>
         <input id="authenticate-password" type="password" placeholder="Password"/>
         <div id="authenticate-buttons" row>
-            <button onclick="Authenticate.signUp(load)">Sign Up</button>
-            <button onclick="Authenticate.signIn(load)">Sign In</button>
+            <button onclick="Authenticate.signUp()">Sign Up</button>
+            <button onclick="Authenticate.signIn()">Sign In</button>
         </div>
     </div>
 </div>
@@ -53,8 +53,8 @@
     <p style="font-size: 5vh;">Open Push</p>
     <p style="font-size: 3vh;">Here are your options</p>
     <div column>
-        <button>Get API</button>
-        <button>Sign Out</button>
+        <button onclick="generate(prompt('What\'s your service name?'));">Get API</button>
+        <button onclick="Authenticate.signOut();location.reload();">Sign Out</button>
     </div>
 </div>
 </body>

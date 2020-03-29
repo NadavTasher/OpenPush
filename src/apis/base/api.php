@@ -52,27 +52,29 @@ class Base
             $APIs = json_decode($request);
             // Parse the APIs
             if (isset($APIs->$API)) {
-                if (isset($APIs->$API->action)) {
-                    if ((is_string($APIs->$API->action) || is_null($APIs->$API->action)) &&
-                        (is_object($APIs->$API->parameters) || is_null($APIs->$API->parameters))) {
-                        // Parse the parameter
-                        $action = $APIs->$API->action;
-                        $action_parameters = $APIs->$API->parameters;
-                        // Execute the call
-                        $action_result = $callback($action, $action_parameters);
-                        // Parse the results
-                        if (is_array($action_result)) {
-                            if (count($action_result) >= 2) {
-                                if (is_bool($action_result[0])) {
-                                    self::$result->$API = new stdClass();
-                                    self::$result->$API->success = $action_result[0];
-                                    self::$result->$API->result = $action_result[1];
-                                    if (count($action_result) >= 3) {
-                                        return $action_result[2];
-                                    } else {
-                                        return null;
-                                    }
-                                }
+                // Default action & parameters
+                $request_action = null;
+                $request_parameters = null;
+                // Check for overriding inputs
+                if (isset($APIs->$API->action) && is_string($APIs->$API->action)) {
+                    $request_action = $APIs->$API->action;
+                }
+                if (isset($APIs->$API->parameters) && is_object($APIs->$API->parameters)) {
+                    $request_parameters = $APIs->$API->parameters;
+                }
+                // Execute the call
+                $request_result = $callback($request_action, $request_parameters);
+                // Parse the results
+                if (is_array($request_result)) {
+                    if (count($request_result) >= 2) {
+                        if (is_bool($request_result[0])) {
+                            self::$result->$API = new stdClass();
+                            self::$result->$API->success = $request_result[0];
+                            self::$result->$API->result = $request_result[1];
+                            if (count($request_result) >= 3) {
+                                return $request_result[2];
+                            } else {
+                                return null;
                             }
                         }
                     }

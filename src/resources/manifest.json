@@ -1,6 +1,6 @@
 {
-  "name": "Notifier",
-  "short_name": "Notifier",
+  "name": "OpenPush",
+  "short_name": "OpenPush",
   "description": "The open notification delivery platform",
   "start_url": "../index.html",
   "background_color": "#f2ffe6",
