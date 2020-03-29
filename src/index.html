@@ -53,7 +53,10 @@
     <p style="font-size: 5vh;">Open Push</p>
     <p style="font-size: 3vh;">Here are your options</p>
     <div column>
-        <button onclick="generate(prompt('What\'s your service name?'));">Get API</button>
+        <div row>
+            <button onclick="generate();">Generate URL</button>
+            <button onclick="issue();">Generate Token</button>
+        </div>
         <button onclick="Authenticate.signOut();location.reload();">Sign Out</button>
     </div>
 </div>
