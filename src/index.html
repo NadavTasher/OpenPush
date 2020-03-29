@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<!--
+ Copyright (c) 2019 Nadav Tasher
+ https://github.com/NadavTasher/BaseTemplate/
+-->
+<html row lang="en">
+<head>
+    <!-- Charset -->
+    <meta charset="UTF-8"/>
+    <!-- App Description -->
+    <meta name="description" content="The open notification delivery platform">
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, minimal-ui"/>
+    <!-- Mobile -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#f2ffe6"/>
+    <!-- Mobile Safari -->
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-title" content="Notifier"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <!-- Icons -->
+    <link rel="icon" href="images/icons/icon.png"/>
+    <link rel="apple-touch-icon" href="images/icons/icon_apple.png"/>
+    <!-- Web Manifest -->
+    <link rel="manifest" href="resources/manifest.json"/>
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="stylesheets/app.css"/>
+    <link rel="stylesheet" href="stylesheets/theme.css"/>
+    <!-- Scripts -->
+    <script type="text/javascript" src="scripts/app.js"></script>
+    <script type="text/javascript" src="scripts/base/api.js"></script>
+    <script type="text/javascript" src="scripts/authenticate/api.js"></script>
+    <!-- App Title -->
+    <title>Notifier</title>
+    <!-- No Script -->
+    <noscript></noscript>
+</head>
+<body onload="window.prepare(()=>Authenticate.authentication(load))" column>
+<div id="authenticate" column>
+    <p style="font-size: 5vh;">Welcome to Notifier</p>
+    <p style="font-size: 3vh;" id="authenticate-output">Please authenticate to continue.</p>
+    <div id="authenticate-inputs" column>
+        <input id="authenticate-name" type="text" placeholder="Name"/>
+        <input id="authenticate-password" type="password" placeholder="Password"/>
+        <div id="authenticate-buttons" row>
+            <button onclick="Authenticate.signUp(load)">Sign Up</button>
+            <button onclick="Authenticate.signIn(load)">Sign In</button>
+        </div>
+    </div>
+</div>
+<div id="authenticated" column>
+    
+</div>
+</body>
+</html>

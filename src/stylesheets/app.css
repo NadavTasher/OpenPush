@@ -1,0 +1,16 @@
+/**
+ * Copyright (c) 2019 Nadav Tasher
+ * https://github.com/NadavTasher/BaseTemplate/
+ **/
+
+:root {
+    --bright: #DDDDEE;
+    --dark: #9999AA;
+    --theme: #f2ffe6;
+    --text: black;
+}
+
+body {
+    max-width: 460px;
+}
+

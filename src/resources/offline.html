@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<!--
+ Copyright (c) 2019 Nadav Tasher
+ https://github.com/NadavTasher/BaseTemplate/
+-->
+<html onclick="window.location.reload();" row lang="en">
+<head>
+    <!-- Charset -->
+    <meta charset="UTF-8"/>
+    <!-- App Description -->
+    <meta name="description" content="The open notification delivery platform">
+    <!-- Viewport -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes, minimal-ui"/>
+    <!-- Mobile -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#f2ffe6"/>
+    <!-- App Title -->
+    <title>Offline</title>
+    <!-- No Script -->
+    <noscript></noscript>
+    <!-- Stylesheets -->
+    <style>
+
+        /**
+         * Copyright (c) 2019 Nadav Tasher
+         * https://github.com/NadavTasher/BaseTemplate/
+         **/
+
+        :root {
+            --bright: #DDDDEE;
+            --dark: #9999AA;
+            --theme: #f2ffe6;
+            --text: black;
+        }
+
+        body {
+            max-width: 460px;
+        }
+
+        html {
+            /* Positioning */
+            position: fixed;
+            /* Sizing */
+            height: 100%;
+            width: 100%;
+        }
+
+        body {
+            /* Overflow */
+            overflow-y: auto !important;
+            /* Alignment */
+            justify-content: start !important;
+            /* Sizing */
+            max-height: 100%;
+            /* Background */
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            background-color: var(--theme);
+        }
+
+        textarea {
+            text-align: left !important;
+            text-align-last: left !important;
+        }
+
+        [text = ""], [text = true], a, p, [input = ""], [input = true], button, input, select, textarea, [row = ""], [row = true], [column = ""], [column = true], div {
+            /* Display */
+            display: flex;
+            flex-direction: column;
+            /* Text */
+            color: var(--text);
+            font-size: large;
+            font-family: Arial, ArialHebrew, sans-serif;
+            /* Text Alignment */
+            text-align: center;
+            text-align-last: center;
+            /* Minimal Sizing */
+            min-height: fit-content;
+            /* Outline */
+            outline: none;
+        }
+
+        [text = ""], [text = true], a, p {
+            flex-flow: wrap;
+            height: auto;
+        }
+
+        [text = ""], [text = true], a, p, [input = ""], [input = true], button, input, select, textarea {
+            /* Positioning */
+            margin: 1vh;
+            padding: 1vh;
+            /* Alignment */
+            justify-content: center;
+            justify-items: center;
+            align-content: center;
+            align-items: stretch;
+            /* Shaping */
+            border-radius: 0.5vh;
+            border-color: transparent;
+            /* Width */
+            width: auto;
+        }
+
+        [input = ""], [input = true], button, input, select, textarea {
+            transition-duration: 0.2s;
+            background-color: var(--bright);
+        }
+
+        [input = ""]:hover, [input = true]:hover, button:hover, input:hover, select:hover, textarea:hover {
+            background-color: var(--dark);
+        }
+
+        [row = ""], [row = true], [column = ""], [column = true], div {
+            /* Alignment */
+            justify-content: center;
+            align-content: center;
+            /* Positioning */
+            margin: 0;
+            padding: 0;
+        }
+
+        [column = ""], [column = true] {
+            /* Flex */
+            flex-direction: column;
+            /* Alignment */
+            align-items: stretch;
+        }
+
+        [row = ""], [row = true] {
+            /* Flex */
+            flex-direction: row;
+            /* Alignment */
+            align-items: center;
+        }
+
+        [row = ""] > *, [row = true] > * {
+            /* Width */
+            width: 100%;
+        }
+
+        *::-webkit-scrollbar {
+            display: none;
+        }
+
+    </style>
+</head>
+<body column>
+<p style="font-size: 6vh">Offline</p>
+<p style="font-size: 3vh">Touch to reload</p>
+</body>
+</html>

@@ -1,0 +1,5 @@
+{
+  "authenticate": true,
+  "signin": true,
+  "signup": true
+}
