@@ -6,8 +6,6 @@
 const CACHE_NAME = "offline";
 const CACHE_FILE = "offline.html";
 
-self.importScripts();
-
 self.addEventListener("install", (event) => {
     // Create cache storage
     event.waitUntil(
