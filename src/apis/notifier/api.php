@@ -17,9 +17,11 @@ include_once __DIR__ . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "authe
 class Notifier
 {
     // API string
-    private const API = "notifier";
+    public const API = "notifier";
+
     // Column names
     private const COLUMN_MESSAGES = "messages";
+
     // Base APIs
     private static Database $database;
 
@@ -41,15 +43,15 @@ class Notifier
         // Init API
         self::init();
         // Return the result
-        return API::handle(Notifier::API, function ($action, $parameters) {
+        return Base::handle(Notifier::API, function () {
             // Authenticate user
             $userID = Authenticate::handle();
-            // Handle actions
-            if ($action === "checkout") {
+            // Handle checkout
+            if ($userID !== null) {
                 return self::checkout($userID);
             }
             // Fallback error
-            return [false, "Undefined hook"];
+            return [false, "Authentication failure"];
         }, true);
     }
 
