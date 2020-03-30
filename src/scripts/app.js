@@ -5,8 +5,8 @@ function load() {
 function generate() {
     token((token) => {
         let URL = window.location.origin + "/apis/push/?api=" + (JSON.stringify({
-            notify: {
-                action: "notify",
+            push: {
+                action: "push",
                 parameters: {
                     title: "Your title",
                     message: "Your message",

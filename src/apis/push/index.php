@@ -31,7 +31,7 @@ Base::handle("push", function ($action, $parameters) {
             return [false, "Authentication failure"];
         }
         return [false, "Parameter error"];
-    } else if ($action === "notify") {
+    } else if ($action === "push") {
         if (isset($parameters->token) && is_string($parameters->token)) {
             // Validate token
             $validation = $authority->validate($parameters->token, ["notify"]);
