@@ -1,10 +1,10 @@
 function load() {
-    Notifier.init(30);
+    Pull.init(30);
 }
 
 function generate() {
     token((token) => {
-        let URL = window.location.origin + "/apis/notify/?api=" + (JSON.stringify({
+        let URL = window.location.origin + "/apis/push/?api=" + (JSON.stringify({
             notify: {
                 action: "notify",
                 parameters: {
@@ -26,7 +26,7 @@ function issue() {
 }
 
 function token(callback = null) {
-    API.send("notify", "issue", {
+    API.send("push", "issue", {
         application: prompt("Enter your service name:", "OpenPush GUI")
     }, (success, token) => {
         if (success) {

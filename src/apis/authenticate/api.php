@@ -318,3 +318,85 @@ class Authenticate
         return [false, "Invalid session"];
     }
 }
+
+/**
+ * Authenticate API for notification delivery.
+ */
+class Manager
+{
+    // API string
+    public const API = "manager";
+
+    // Column names
+    private const COLUMN_MESSAGES = "messages";
+
+    // Base APIs
+    private static Database $database;
+
+    /**
+     * API initializer.
+     */
+    public static function init()
+    {
+        // Initialize database
+        self::$database = new Database(self::API);
+        self::$database->createColumn(self::COLUMN_MESSAGES);
+    }
+
+    /**
+     * Pushes a new message to the user.
+     * @param string $id User ID
+     * @param string $title Title
+     * @param string $message Message
+     * @return array Results
+     */
+    public static function push($id, $title = null, $message = null)
+    {
+        // Make sure the ID exists
+        if (!self::$database->hasRow($id)[0]) {
+            self::$database->createRow($id);
+        }
+        // Initialize messages array
+        $messages = array();
+        // Check the database
+        if (self::$database->isset($id, self::COLUMN_MESSAGES)[0]) {
+            $messages = json_decode(self::$database->get($id, self::COLUMN_MESSAGES)[1]);
+        }
+        // Create a new message object
+        $messageObject = new stdClass();
+        $messageObject->title = $title;
+        $messageObject->message = $message;
+        $messageObject->timestamp = time();
+        // Push into array
+        array_push($messages, $messageObject);
+        // Set the messages array
+        return self::$database->set($id, self::COLUMN_MESSAGES, json_encode($messages));
+    }
+
+    /**
+     * Pulls the messages to the user.
+     * @param string $id User ID
+     * @return array Results
+     */
+    public static function pull($id)
+    {
+        // Make sure the ID exists
+        if (!self::$database->hasRow($id)[0]) {
+            self::$database->createRow($id);
+        }
+        // Initialize messages array
+        $messages = array();
+        // Check the database
+        if (self::$database->isset($id, self::COLUMN_MESSAGES)[0]) {
+            $messages = json_decode(self::$database->get($id, self::COLUMN_MESSAGES)[1]);
+        }
+        // Clear the messages array
+        $set = self::$database->set($id, self::COLUMN_MESSAGES, json_encode(array()));
+        // Check the result
+        if ($set[0]) {
+            return [true, $messages];
+        }
+        // Fallback error
+        return $set;
+    }
+}

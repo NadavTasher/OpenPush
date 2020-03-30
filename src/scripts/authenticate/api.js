@@ -3,6 +3,7 @@
  * https://github.com/NadavTasher/AuthenticationTemplate/
  **/
 
+const PULL_API = "pull";
 const AUTHENTICATE_API = "authenticate";
 
 /**
@@ -138,6 +139,72 @@ class Authenticate {
         } else {
             // Clear the text color
             output.style.removeProperty("color");
+        }
+    }
+
+}
+
+/**
+ * Authenticate API for notification delivery.
+ */
+class Pull {
+
+    /**
+     * Start the pull loop.
+     */
+    static init(timeout = 60, callback = this.notify) {
+        // Start the interval
+        setInterval(() => {
+            this.pull(callback);
+        }, timeout * 1000);
+    }
+
+    /**
+     * Pulls the messages from the server.
+     */
+    static pull(callback = null) {
+        API.send(PULL_API, null, null, (success, result) => {
+            if (success) {
+                // Send notifications
+                if (callback !== null) {
+                    for (let notification of result) {
+                        callback(notification);
+                    }
+                }
+            }
+        }, Authenticate.authenticate());
+    }
+
+    /**
+     * Default pull callback.
+     * @param notification Notification
+     */
+    static notify(notification) {
+        // Check compatibility
+        if ("Notification" in window) {
+            // Parse object
+            let notificationTitle = notification.title || "No Title";
+            let notificationMessage = notification.message || undefined;
+            // Create options object
+            let notificationOptions = {
+                body: notificationMessage,
+                icon: "images/icons/icon.png",
+                badge: "images/icons/icon.png"
+            };
+            // Check permission
+            if (Notification.permission === "granted") {
+                // Send notification
+                new Notification(notificationTitle, notificationOptions);
+            } else {
+                // Request permission
+                Notification.requestPermission().then((permission) => {
+                    // Check permission
+                    if (permission === "granted") {
+                        // Send notification
+                        new Notification(notificationTitle, notificationOptions);
+                    }
+                });
+            }
         }
     }
 
