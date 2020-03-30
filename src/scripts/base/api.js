@@ -31,7 +31,7 @@ class API {
      * @param callback Callback
      * @param APIs API list
      */
-    static send(endpoint = null, action = null, parameters = null, callback = null, APIs = {}) {
+    static send(endpoint = null, action = null, parameters = null, callback = null, APIs = []) {
         this.call(endpoint, this.hook(endpoint, action, parameters, callback, APIs));
     }
 
@@ -40,90 +40,81 @@ class API {
      * @param endpoint Endpoint API
      * @param APIs API list
      */
-    static call(endpoint, APIs = {}) {
-        // Make sure the APIs list is well structured
-        if (APIs.hasOwnProperty("apis") && APIs.hasOwnProperty("callbacks")) {
-            // Create a form
-            let form = new FormData();
-            // Append the compiled hook as "api"
-            form.append("api", JSON.stringify(APIs.apis));
-            // Make sure the device is online
-            if (typeof window === typeof undefined || window.navigator.onLine) {
-                // Perform the request
-                fetch("apis/" + endpoint + "/", {
-                    method: "post",
-                    body: form
-                }).then(response => {
-                    response.text().then((result) => {
-                        // Try to parse the result as JSON
-                        try {
-                            let json = JSON.parse(result);
-                            // Loop through APIs
-                            for (let api in APIs.callbacks) {
-                                // Check if the callback really exists
-                                if (APIs.callbacks.hasOwnProperty(api)) {
-                                    // Try parsing and calling
-                                    try {
-                                        // Store the callback
-                                        let callback = APIs.callbacks[api];
-                                        // Make sure the callback isn't null
-                                        if (callback !== null) {
-                                            // Make sure the requested API exists in the result
-                                            if (json.hasOwnProperty(api)) {
-                                                // Check the result's integrity
-                                                if (json[api].hasOwnProperty("success") && json[api].hasOwnProperty("result")) {
-                                                    // Call the callback with the result
-                                                    callback(json[api]["success"] === true, json[api]["result"]);
-                                                } else {
-                                                    // Call the callback with an error
-                                                    callback(false, "API parameters not found");
-                                                }
-                                            } else {
-                                                // Call the callback with an error
-                                                callback(false, "API not found");
-                                            }
+    static call(endpoint, APIs = []) {
+        // Create a form
+        let form = new FormData();
+        // Compile to hook
+        let hook = {};
+        for (let API of APIs) {
+            hook[API.API] = API.request;
+        }
+        // Append the compiled hook as "api"
+        form.append("api", JSON.stringify(hook));
+        // Make sure the device is online
+        if (typeof window === typeof undefined || window.navigator.onLine) {
+            // Perform the request
+            fetch("apis/" + endpoint + "/", {
+                method: "post",
+                body: form
+            }).then(response => {
+                response.text().then((result) => {
+                    // Try to parse the result as JSON
+                    try {
+                        let stack = JSON.parse(result);
+                        // Loop through APIs
+                        for (let API of APIs) {
+                            // Check if the callback really exists
+                            if (API.callback !== null) {
+                                // Try parsing and calling
+                                try {
+                                    // Make sure the requested API exists in the result
+                                    if (stack.hasOwnProperty(API.API)) {
+                                        // Store the result
+                                        let layer = stack[API.API];
+                                        // Check the result's integrity
+                                        if (layer.hasOwnProperty("success") && layer.hasOwnProperty("result")) {
+                                            // Call the callback with the result
+                                            API.callback(layer["success"] === true, layer["result"]);
+                                        } else {
+                                            // Call the callback with an error
+                                            API.callback(false, "API parameters not found");
                                         }
-                                    } catch (ignored) {
+                                    } else {
+                                        // Call the callback with an error
+                                        API.callback(false, "API not found");
                                     }
+                                } catch (ignored) {
                                 }
                             }
-                        } catch (ignored) {
                         }
-                    });
+                    } catch (ignored) {
+                    }
                 });
-            }
+            });
         }
     }
 
     /**
      * Compiles an API call hook.
-     * @param api API name
+     * @param API API name
      * @param action Action
      * @param parameters Parameters
      * @param callback Callback
      * @param APIs API list
-     * @returns API list
+     * @return *[] API list
      */
-    static hook(api = null, action = null, parameters = null, callback = null, APIs = {}) {
-        // Make sure the APIs list is well structured
-        if (!APIs.hasOwnProperty("apis")) {
-            APIs["apis"] = {};
-        }
-        if (!APIs.hasOwnProperty("callbacks")) {
-            APIs["callbacks"] = {};
-        }
-        // Make sure the API isn't already compiled in the API list
-        if (!(APIs["apis"].hasOwnProperty(api) || APIs["callbacks"].hasOwnProperty(api))) {
-            // Make sure none are null
-            if (api !== null) {
-                // Compile API
-                APIs["apis"][api] = {
+    static hook(API = null, action = null, parameters = null, callback = null, APIs = []) {
+        // Make sure none are null
+        if (API !== null) {
+            // Compile API
+            APIs.push({
+                API: API,
+                request: {
                     action: action || null,
                     parameters: parameters || null
-                };
-                // Compile callback
-                APIs["callbacks"][api] = callback;
-            }
+                },
+                callback: callback || null
+            });
         }
         // Return updated API list
         return APIs;
