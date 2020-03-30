@@ -1,5 +1,4 @@
 function load() {
-    Pull.init(30);
 }
 
 function generate() {

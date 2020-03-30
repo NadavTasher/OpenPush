@@ -11,16 +11,19 @@ const AUTHENTICATE_API = "authenticate";
  */
 class Authenticate {
 
+    static token = null;
+
     /**
      * Authenticates the user by requiring signup, signin and session validation.
      * @param callback Post authentication callback
      */
     static authentication(callback = null) {
+        // Load the token
+        this.token = localStorage.getItem(AUTHENTICATE_API);
         // View the authentication panel
         UI.page("authenticate");
         // Check authentication
-        let token = PathStorage.getItem(AUTHENTICATE_API);
-        if (token !== null) {
+        if (this.token !== null) {
             // Hide the inputs
             UI.hide("authenticate-inputs");
             // Change the output message
@@ -30,6 +33,8 @@ class Authenticate {
                 if (success) {
                     // Change the page
                     UI.page("authenticated");
+                    // Send a message to the service worker
+                    window.worker.postMessage(this.token);
                     // Run the callback
                     if (callback !== null) {
                         callback();
@@ -48,15 +53,14 @@ class Authenticate {
      * Compiles an authenticated API hook.
      * @param callback Callback
      * @param APIs Inherited APIs
-     * @return API list
+     * @return *[] API list
      */
     static authenticate(callback = null, APIs = API.hook()) {
         // Check if the session cookie exists
-        let token = PathStorage.getItem(AUTHENTICATE_API);
-        if (token !== null) {
+        if (this.token !== null) {
             // Compile the API hook
             APIs = API.hook(AUTHENTICATE_API, "authenticate", {
-                token: token
+                token: this.token
             }, callback, APIs);
         }
         return APIs;
@@ -101,8 +105,8 @@ class Authenticate {
             password: UI.find("authenticate-password").value
         }, (success, result) => {
             if (success) {
-                // Push the session cookie
-                PathStorage.setItem(AUTHENTICATE_API, result);
+                // Push the token
+                localStorage.setItem(AUTHENTICATE_API, this.token = result);
                 // Call the authentication function
                 this.authentication(callback);
             } else {
@@ -119,7 +123,7 @@ class Authenticate {
      */
     static signOut() {
         // Push 'undefined' to the session cookie
-        PathStorage.removeItem(AUTHENTICATE_API);
+        localStorage.removeItem(AUTHENTICATE_API);
     }
 
     /**
@@ -151,25 +155,25 @@ class Pull {
 
     /**
      * Start the pull loop.
+     * @param registration Registration
      */
-    static init(timeout = 60, callback = this.notify) {
+    static init(registration = null) {
         // Start the interval
         setInterval(() => {
-            this.pull(callback);
-        }, timeout * 1000);
+            this.pull(registration);
+        }, 60 * 1000);
     }
 
     /**
      * Pulls the messages from the server.
+     * @param registration Registration
      */
-    static pull(callback = null) {
+    static pull(registration = null) {
         API.send(PULL_API, null, null, (success, result) => {
             if (success) {
                 // Send notifications
-                if (callback !== null) {
-                    for (let notification of result) {
-                        callback(notification);
-                    }
+                for (let notification of result) {
+                    this.notify(notification, registration);
                 }
             }
         }, Authenticate.authenticate());
@@ -178,10 +182,11 @@ class Pull {
     /**
      * Default pull callback.
      * @param notification Notification
+     * @param registration Registration
      */
-    static notify(notification) {
+    static notify(notification, registration = null) {
         // Check compatibility
-        if ("Notification" in window) {
+        if (typeof window === typeof undefined || "Notification" in window) {
             // Parse object
             let notificationTitle = notification.title || "No Title";
             let notificationMessage = notification.message || undefined;
@@ -194,18 +199,24 @@ class Pull {
             // Check permission
             if (Notification.permission === "granted") {
                 // Send notification
-                new Notification(notificationTitle, notificationOptions);
+                if (registration === null) {
+                    new Notification(notificationTitle, notificationOptions);
+                } else {
+                    registration.showNotification(notificationTitle, notificationOptions).then();
+                }
             } else {
-                // Request permission
                 Notification.requestPermission().then((permission) => {
                     // Check permission
                     if (permission === "granted") {
                         // Send notification
-                        new Notification(notificationTitle, notificationOptions);
+                        if (registration === null) {
+                            new Notification(notificationTitle, notificationOptions);
+                        } else {
+                            registration.showNotification(notificationTitle, notificationOptions).then();
+                        }
                     }
                 });
             }
         }
     }
-
 }
