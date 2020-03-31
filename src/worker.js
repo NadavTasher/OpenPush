@@ -6,8 +6,6 @@
 const CACHE_NAME = "offline";
 const CACHE_FILE = "offline.html";
 
-self.importScripts("scripts/base/api.js", "scripts/authenticate/api.js");
-
 self.addEventListener("install", (event) => {
     // Create cache storage
     event.waitUntil(
@@ -26,11 +24,4 @@ self.addEventListener("fetch", function (event) {
     event.request.cache = "no-store";
     // Try fetching or return a cached response
     event.respondWith(fetch(event.request).then(response => response).catch(() => caches.match(new Request(CACHE_FILE)) || new Response("Offline")));
-});
-
-self.addEventListener("message", function (event) {
-    // Set the token
-    Authenticate.token = event.data;
-    // Start the pull service
-    Pull.init(self.registration);
 });
