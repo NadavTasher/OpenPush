@@ -33,8 +33,6 @@ class Authenticate {
                 if (success) {
                     // Change the page
                     UI.page("authenticated");
-                    // Start the pull service
-                    Pull.init();
                     // Run the callback
                     if (callback !== null) {
                         callback();

@@ -50,13 +50,30 @@
 </div>
 <div id="authenticated" column>
     <p style="font-size: 5vh;">Open Push</p>
-    <p style="font-size: 3vh;">Here are your options</p>
     <div column>
-        <div row>
-            <button onclick="generate();">Generate URL</button>
-            <button onclick="issue();">Generate Token</button>
+        <div id="home" column>
+            <p style="font-size: 3vh;">Create access tokens</p>
+            <div column>
+                <div row>
+                    <button onclick="generate();">Generate URL</button>
+                    <button onclick="issue();">Generate Token</button>
+                </div>
+                <button onclick="Authenticate.signOut();location.reload();">Sign Out</button>
+            </div>
         </div>
-        <button onclick="Authenticate.signOut();location.reload();">Sign Out</button>
+        <div id="result" column>
+            <p style="font-size: 3vh;">Copy access token</p>
+            <div column>
+                <div column>
+                    <p style="font-size: 2vh;">Access token</p>
+                    <input id="token" type="text" placeholder="Access token"/>
+                </div>
+                <div column>
+                    <p style="font-size: 2vh;">Push URL</p>
+                    <input id="url" type="text" placeholder="Push URL"/>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 </body>
