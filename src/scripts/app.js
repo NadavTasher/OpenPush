@@ -15,21 +15,13 @@ function generate() {
     // Validate service name
     if (application !== null && application.length > 0) {
         // Send an issuing request
-        API.send("push", "issue", {
-            application: application
+        API.call("push", "issue", {
+            application: application,
+            token: Authenticate.token
         }, (success, token) => {
             if (success) {
                 // Create URL
-                let url = window.location.origin + "/apis/push/?api=" + (JSON.stringify({
-                    push: {
-                        action: "push",
-                        parameters: {
-                            title: "Your title",
-                            message: "Your message",
-                            token: token
-                        }
-                    }
-                }));
+                let url = window.location.origin + "/apis/push/?push&title=" + encodeURIComponent("Your title") + "&message=" + encodeURIComponent("Your message") + "&token=" + encodeURIComponent(token);
                 // Set values and onclicks
                 let tokenHolder = UI.find("token");
                 let urlHolder = UI.find("url");
@@ -50,6 +42,6 @@ function generate() {
                 // Change view
                 UI.view("result");
             }
-        }, Authenticate.authenticate());
+        });
     }
 }

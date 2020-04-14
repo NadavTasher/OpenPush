@@ -1,5 +1,5 @@
 {
-  "authenticate": true,
-  "signin": true,
-  "signup": true
+  "validate": true,
+  "signIn": true,
+  "signUp": true
 }

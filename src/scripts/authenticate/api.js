@@ -7,7 +7,7 @@ const PULL_API = "pull";
 const AUTHENTICATE_API = "authenticate";
 
 /**
- * Authenticate API for user authentication.
+ * Authenticate API for user initialize.
  */
 class Authenticate {
 
@@ -15,22 +15,24 @@ class Authenticate {
 
     /**
      * Authenticates the user by requiring signup, signin and session validation.
-     * @param callback Post authentication callback
+     * @param callback Post initialize callback
      */
-    static authentication(callback = null) {
+    static initialize(callback = null) {
         // Load the token
         this.token = localStorage.getItem(AUTHENTICATE_API);
-        // View the authentication panel
+        // View the initialize panel
         UI.page("authenticate");
-        // Check authentication
+        // Check initialize
         if (this.token !== null) {
             // Hide the inputs
             UI.hide("authenticate-inputs");
             // Change the output message
             this.output("Hold on - Authenticating...");
             // Send the API call
-            API.call(AUTHENTICATE_API, this.authenticate((success, result) => {
-                if (success) {
+            API.call(AUTHENTICATE_API, "validate", {
+                token: this.token
+            }, (status, result) => {
+                if (status) {
                     // Change the page
                     UI.page("authenticated");
                     // Run the callback
@@ -43,25 +45,8 @@ class Authenticate {
                     // Change the output message
                     this.output(result, true);
                 }
-            }));
+            });
         }
-    }
-
-    /**
-     * Compiles an authenticated API hook.
-     * @param callback Callback
-     * @param APIs Inherited APIs
-     * @return *[] API list
-     */
-    static authenticate(callback = null, APIs = API.hook()) {
-        // Check if the session cookie exists
-        if (this.token !== null) {
-            // Compile the API hook
-            APIs = API.hook(AUTHENTICATE_API, "authenticate", {
-                token: this.token
-            }, callback, APIs);
-        }
-        return APIs;
     }
 
     /**
@@ -73,11 +58,11 @@ class Authenticate {
         // Change the output message
         this.output("Hold on - Signing you up...");
         // Send the API call
-        API.send(AUTHENTICATE_API, "signup", {
+        API.call(AUTHENTICATE_API, "signUp", {
             name: UI.find("authenticate-name").value,
             password: UI.find("authenticate-password").value
-        }, (success, result) => {
-            if (success) {
+        }, (status, result) => {
+            if (status) {
                 // Call the signin function
                 this.signIn(callback);
             } else {
@@ -98,15 +83,15 @@ class Authenticate {
         // Change the output message
         this.output("Hold on - Signing you in...");
         // Send the API call
-        API.send(AUTHENTICATE_API, "signin", {
+        API.call(AUTHENTICATE_API, "signIn", {
             name: UI.find("authenticate-name").value,
             password: UI.find("authenticate-password").value
-        }, (success, result) => {
-            if (success) {
+        }, (status, result) => {
+            if (status) {
                 // Push the token
                 localStorage.setItem(AUTHENTICATE_API, this.token = result);
-                // Call the authentication function
-                this.authentication(callback);
+                // Call the initialize function
+                this.initialize(callback);
             } else {
                 // Show the inputs
                 UI.show("authenticate-inputs");
@@ -156,7 +141,7 @@ class Pull {
      * @param timeout Timeout
      * @param callback Callback
      */
-    static init(timeout = 30, callback = this.notify) {
+    static initialize(timeout = 30, callback = this.notify) {
         // Start the interval
         setInterval(() => {
             this.pull(callback);
@@ -168,8 +153,10 @@ class Pull {
      * @param callback Callback
      */
     static pull(callback = null) {
-        API.send(PULL_API, null, null, (success, result) => {
-            if (success) {
+        API.call(PULL_API, null, {
+            token: Authenticate.token
+        }, (status, result) => {
+            if (status) {
                 // Send notifications
                 if (callback !== null) {
                     for (let notification of result) {
@@ -177,7 +164,7 @@ class Pull {
                     }
                 }
             }
-        }, Authenticate.authenticate());
+        });
     }
 
     /**

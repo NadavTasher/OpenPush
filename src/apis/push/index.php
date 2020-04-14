@@ -3,28 +3,28 @@
 // Include the Authenticate API
 include_once __DIR__ . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "authenticate" . DIRECTORY_SEPARATOR . "api.php";
 
-// Initialize the base API
-Base::init();
+// Initialize the authenticate API
+Authenticate::initialize();
 
 // Initialize the manager API
-Manager::init();
+Manager::initialize();
 
 // Handle the API call
-Base::handle("push", function ($action, $parameters) {
+Base::handle(function ($action, $parameters) {
     // Initialize the authority
     $authority = new Authority("push");
     // Switch action
     if ($action === "issue") {
-        if (isset($parameters->application) && is_string($parameters->application)) {
+        if (isset($parameters->application) && is_string($parameters->application) && isset($parameters->token) && is_string($parameters->token)) {
             // Authenticate the user to issue a new token
-            $userID = Authenticate::handle();
-            if ($userID !== null) {
+            $userID = Authenticate::validate($parameters->token);
+            if ($userID[0]) {
                 // Create token object
                 $tokenObject = new stdClass();
-                $tokenObject->id = $userID;
+                $tokenObject->id = $userID[1];
                 $tokenObject->application = $parameters->application;
                 // Notify the user
-                Manager::push($userID, "You just allowed \"" . $parameters->application . "\" to send you notifications.");
+                Manager::push($userID[1], "You just allowed \"" . $parameters->application . "\" to send you notifications.");
                 // Issue the token
                 return $authority->issue($tokenObject, ["notify"], 60 * 60 * 24 * 365);
             }
@@ -61,7 +61,4 @@ Base::handle("push", function ($action, $parameters) {
     }
     // Fallback error
     return [false, "Undefined hook"];
-}, true);
-
-// Echo the results
-Base::echo();
+});

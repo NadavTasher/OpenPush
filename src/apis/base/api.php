@@ -13,131 +13,122 @@ class Base
     // Constants
     public const API = "base";
 
-    // API results
-    private static stdClass $result;
-
-    /**
-     * Creates the result object.
-     */
-    public static function init()
-    {
-        self::$result = new stdClass();
-    }
-
     /**
      * Handles API calls by handing them over to the callback.
-     * @param string $API The API to listen to
-     * @param callable $callback The callback to be called with action and parameters
-     * @param bool $filter Whether to filter XSS characters
-     * @return mixed|null A result array with [success, result|error]
+     * @param callable $callback Callback to handle the request
      */
-    public static function handle($API, $callback, $filter = true)
+    public static function handle($callback)
     {
-        // Initialize the request
-        $request = null;
-        // Load the request from POST or GET
-        if (isset($_POST["api"])) {
-            $request = $_POST["api"];
-        } else if (isset($_GET["api"])) {
-            $request = $_GET["api"];
-        }
-        // Make sure the request is initialized
-        if ($request !== null) {
-            // Filter the request
-            if ($filter) {
-                $request = str_replace("<", "", $request);
-                $request = str_replace(">", "", $request);
+        // Initialize the response
+        $result = new stdClass();
+        // Initialize the action
+        if (count($_GET) > 0) {
+            // Get the action
+            $requestAction = array_key_first($_GET);
+            // Parse the parameters
+            $requestParameters = new stdClass();
+            // Loop over GET parameters
+            foreach ($_GET as $name => $value) {
+                if (is_string($value))
+                    $requestParameters->$name = $value;
             }
-            // Decode the request
-            $APIs = json_decode($request);
-            // Parse the APIs
-            if (isset($APIs->$API)) {
-                // Default action & parameters
-                $request_action = null;
-                $request_parameters = null;
-                // Check for overriding inputs
-                if (isset($APIs->$API->action) && is_string($APIs->$API->action)) {
-                    $request_action = $APIs->$API->action;
-                }
-                if (isset($APIs->$API->parameters) && is_object($APIs->$API->parameters)) {
-                    $request_parameters = $APIs->$API->parameters;
-                }
-                // Execute the call
-                $request_result = $callback($request_action, $request_parameters);
-                // Parse the results
-                if (is_array($request_result)) {
-                    if (count($request_result) >= 2) {
-                        if (is_bool($request_result[0])) {
-                            self::$result->$API = new stdClass();
-                            self::$result->$API->success = $request_result[0];
-                            self::$result->$API->result = $request_result[1];
-                            if (count($request_result) >= 3) {
-                                return $request_result[2];
-                            } else {
-                                return null;
-                            }
-                        }
+            // Loop over POST parameters
+            foreach ($_POST as $name => $value) {
+                if (is_string($value))
+                    $requestParameters->$name = $value;
+            }
+            // Unset the action
+            unset($requestParameters->$requestAction);
+            // Execute the call
+            $requestResult = $callback($requestAction, $requestParameters);
+            // Parse the results
+            if (is_array($requestResult)) {
+                if (count($requestResult) === 2) {
+                    if (is_bool($requestResult[0])) {
+                        // Set status
+                        $result->status = $requestResult[0];
+                        // Set result
+                        $result->result = $requestResult[1];
                     }
                 }
             }
         }
-        // Fallback result
-        return null;
-    }
-
-    /**
-     * Echos the result object as JSON.
-     */
-    public static function echo()
-    {
-        echo json_encode(self::$result);
+        // Change the response type
+        header("Content-Type: application/json");
+        // Echo response
+        echo json_encode($result);
     }
 }
 
 /**
- * Base API for general functions.
+ * Base API for utility functions.
  */
-class Utils
+class Utility
 {
+    // Directory root
+    private const DIRECTORY_ROOT = __DIR__ . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "files";
+
+    // Directory delimiter
+    private const DIRECTORY_DELIMITER = ":";
+
     // Hashing properties
     private const HASHING_ROUNDS = 16;
     private const HASHING_ALGORITHM = "sha256";
 
-    // Directory properties
-    private const DIRECTORY = __DIR__ . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . ".." . DIRECTORY_SEPARATOR . "files";
-
     /**
-     * Creates a host directory for an API.
-     * @param string $API API
-     * @return string Directory
+     * Returns a writable path for a name.
+     * @param string $name Path name
+     * @param string $base Base directory
+     * @return string Path
      */
-    public static function hostDirectory($API = Base::API)
+    public static function evaluatePath($name, $base = self::DIRECTORY_ROOT)
     {
-        // Create the data directory path
-        $directory = self::DIRECTORY . DIRECTORY_SEPARATOR . basename($API);
-        // Make sure the directory exists
-        if (!file_exists($directory)) {
-            mkdir($directory);
+        // Split name
+        $split = explode(self::DIRECTORY_DELIMITER, $name, 2);
+        // Check if we have to create a sub-path
+        if (count($split) > 1) {
+            // Append first path to the base
+            $base = $base . DIRECTORY_SEPARATOR . $split[0];
+            // Make sure the path exists
+            if (!file_exists($base)) {
+                mkdir($base);
+            }
+            // Return the path
+            return self::evaluatePath($split[1], realpath($base));
         }
-        // Return the path
-        return $directory;
+        // Return the last path
+        return $base . DIRECTORY_SEPARATOR . $name;
     }
 
     /**
-     * Creates a guest directory for an API.
+     * Returns a writable file path for a name.
+     * @param string $name File name
      * @param string $hostAPI Host API
      * @param string $guestAPI Guest API
-     * @return string Directory
+     * @return string File path
      */
-    public static function guestDirectory($hostAPI = Base::API, $guestAPI = Base::API)
+    public static function evaluateFile($name = "", $hostAPI = Base::API, $guestAPI = null)
     {
-        // Create the data directory path
-        $directory = self::hostDirectory($hostAPI) . DIRECTORY_SEPARATOR . basename($guestAPI);
-        // Make sure the directory exists
-        if (!file_exists($directory)) {
-            mkdir($directory);
-        }
+        // Add APIs
+        $name = implode(self::DIRECTORY_DELIMITER, [$hostAPI, $guestAPI, $name]);
         // Return the path
+        return self::evaluatePath($name);
+    }
+
+    /**
+     * Returns a writable directory path for a name.
+     * @param string $name Directory name
+     * @param string $hostAPI Host API
+     * @param string $guestAPI Guest API
+     * @return string Directory path
+     */
+    public static function evaluateDirectory($name = "", $hostAPI = Base::API, $guestAPI = null)
+    {
+        // Find parent directory
+        $directory = self::evaluateFile($name, $hostAPI, $guestAPI);
+        // Make sure the subdirectory exists
+        if (!file_exists($directory)) mkdir($directory);
+        // Return the directory path
         return $directory;
     }
 
@@ -146,10 +137,10 @@ class Utils
      * @param int $length String length
      * @return string String
      */
-    public static function randomString($length = 0)
+    public static function random($length = 0)
     {
         if ($length > 0) {
-            return str_shuffle("0123456789abcdefghijklmnopqrstuvwxyz")[0] . self::randomString($length - 1);
+            return str_shuffle("0123456789abcdefghijklmnopqrstuvwxyz")[0] . self::random($length - 1);
         }
         return "";
     }
@@ -160,12 +151,12 @@ class Utils
      * @param int $rounds Number of rounds
      * @return string Hash
      */
-    public static function hashMessage($message, $rounds = self::HASHING_ROUNDS)
+    public static function hash($message, $rounds = self::HASHING_ROUNDS)
     {
         if ($rounds === 0) {
             return hash(self::HASHING_ALGORITHM, $message);
         }
-        return hash(self::HASHING_ALGORITHM, self::hashMessage($message, $rounds - 1));
+        return hash(self::HASHING_ALGORITHM, self::hash($message, $rounds - 1));
     }
 
     /**
@@ -175,12 +166,12 @@ class Utils
      * @param int $rounds Number of rounds
      * @return string Signature
      */
-    public static function signMessage($message, $secret, $rounds = self::HASHING_ROUNDS)
+    public static function sign($message, $secret, $rounds = self::HASHING_ROUNDS)
     {
         if ($rounds === 0) {
             return hash_hmac(self::HASHING_ALGORITHM, $message, $secret);
         }
-        return hash_hmac(self::HASHING_ALGORITHM, self::signMessage($message, $secret, $rounds - 1), $secret);
+        return hash_hmac(self::HASHING_ALGORITHM, self::sign($message, $secret, $rounds - 1), $secret);
     }
 }
 
@@ -194,7 +185,6 @@ class Database
 
     private const LENGTH = 32;
     private const SEPARATOR = "\n";
-    private const ROWS = "rows", COLUMNS = "columns", LINKS = "links";
 
     // Guest API
     private string $API;
@@ -202,28 +192,10 @@ class Database
     /**
      * Database constructor.
      * @param string $API API name
-     * @param string $name Database name
      */
     public function __construct($API = Base::API)
     {
         $this->API = $API;
-    }
-
-    /**
-     * Creates and returns a data path.
-     * @param string $subdirectory Directory name
-     * @return string Path
-     */
-    private function directory($subdirectory)
-    {
-        // Append the subdirectory name
-        $directory = Utils::guestDirectory(self::API, $this->API) . DIRECTORY_SEPARATOR . basename($subdirectory);
-        // Make sure the directory exists
-        if (!file_exists($directory)) {
-            mkdir($directory);
-        }
-        // Return the path
-        return $directory;
     }
 
     /**
@@ -235,13 +207,13 @@ class Database
     {
         // Generate a row ID
         if ($id === null) {
-            $id = Utils::randomString(self::LENGTH);
+            $id = Utility::random(self::LENGTH);
         }
         // Check if the row already exists
         $has_row = $this->hasRow($id);
         if (!$has_row[0]) {
             // Create row directory
-            mkdir($this->directory(self::ROWS) . DIRECTORY_SEPARATOR . $id);
+            mkdir(Utility::evaluateFile("rows:$id", self::API, $this->API));
             // Return result
             return [true, $id];
         }
@@ -256,12 +228,12 @@ class Database
     public function createColumn($name)
     {
         // Generate hashed string
-        $hashed = Utils::hashMessage($name);
+        $hashed = Utility::hash($name);
         // Check if the column already exists
         $has_column = $this->hasColumn($name);
         if (!$has_column[0]) {
             // Create column directory
-            mkdir($this->directory(self::COLUMNS) . DIRECTORY_SEPARATOR . $hashed);
+            mkdir(Utility::evaluateFile("columns:$hashed", self::API, $this->API));
             // Return result
             return [true, $name];
         }
@@ -277,7 +249,7 @@ class Database
     public function createLink($row, $link)
     {
         // Generate hashed string
-        $hashed = Utils::hashMessage($link);
+        $hashed = Utility::hash($link);
         // Check if the link already exists
         $has_link = $this->hasLink($link);
         if (!$has_link[0]) {
@@ -285,7 +257,7 @@ class Database
             $has_row = $this->hasRow($row);
             if ($has_row[0]) {
                 // Generate link file
-                file_put_contents($this->directory(self::LINKS) . DIRECTORY_SEPARATOR . $hashed, $row);
+                file_put_contents(Utility::evaluateFile("links:$hashed", self::API, $this->API), $row);
                 // Return result
                 return [true, $link];
             }
@@ -302,7 +274,7 @@ class Database
     public function hasRow($id)
     {
         // Store path
-        $path = $this->directory(self::ROWS) . DIRECTORY_SEPARATOR . $id;
+        $path = Utility::evaluateFile("rows:$id", self::API, $this->API);
         // Check if path exists and is a directory
         if (file_exists($path) && is_dir($path)) {
             return [true, $id];
@@ -318,9 +290,9 @@ class Database
     public function hasColumn($name)
     {
         // Generate hashed string
-        $hashed = Utils::hashMessage($name);
+        $hashed = Utility::hash($name);
         // Store path
-        $path = $this->directory(self::COLUMNS) . DIRECTORY_SEPARATOR . $hashed;
+        $path = Utility::evaluateFile("columns:$hashed", self::API, $this->API);
         // Check if path exists and is a directory
         if (file_exists($path) && is_dir($path)) {
             return [true, $name];
@@ -336,9 +308,9 @@ class Database
     public function hasLink($link)
     {
         // Generate hashed string
-        $hashed = Utils::hashMessage($link);
+        $hashed = Utility::hash($link);
         // Store path
-        $path = $this->directory(self::LINKS) . DIRECTORY_SEPARATOR . $hashed;
+        $path = Utility::evaluateFile("links:$hashed", self::API, $this->API);
         // Check if path exists and is a file
         if (file_exists($path) && is_file($path)) {
             // Read link
@@ -362,9 +334,9 @@ class Database
             $has_column = $this->hasColumn($column);
             if ($has_column[0]) {
                 // Generate hashed string
-                $hashed = Utils::hashMessage($column);
+                $hashed_name = Utility::hash($column);
                 // Store path
-                $path = $this->directory(self::ROWS) . DIRECTORY_SEPARATOR . $row . DIRECTORY_SEPARATOR . $hashed;
+                $path = Utility::evaluateFile("rows:$row:$hashed_name", self::API, $this->API);
                 // Check if path exists and is a file
                 if (file_exists($path) && is_file($path)) {
                     return [true, null];
@@ -393,15 +365,15 @@ class Database
         $has_column = $this->hasColumn($column);
         if ($has_column[0]) {
             // Create hashed string
-            $hashed_name = Utils::hashMessage($column);
+            $hashed_name = Utility::hash($column);
             // Store path
-            $value_path = $this->directory(self::ROWS) . DIRECTORY_SEPARATOR . $row . DIRECTORY_SEPARATOR . $hashed_name;
+            $value_path = Utility::evaluateFile("rows:$row:$hashed_name", self::API, $this->API);
             // Create hashed string
-            $hashed_value = Utils::hashMessage($value);
+            $hashed_value = Utility::hash($value);
             // Write path
             file_put_contents($value_path, $value);
             // Store new path
-            $index_path = $this->directory(self::COLUMNS) . DIRECTORY_SEPARATOR . $hashed_name . DIRECTORY_SEPARATOR . $hashed_value;
+            $index_path = Utility::evaluateFile("columns:$hashed_name:$hashed_value", self::API, $this->API);
             // Create rows array
             $rows = array();
             // Make sure the index file exists
@@ -436,16 +408,17 @@ class Database
             $has_column = $this->hasColumn($column);
             if ($has_column[0]) {
                 // Create hashed string
-                $hashed_name = Utils::hashMessage($column);
+                $hashed_name = Utility::hash($column);
                 // Store path
-                $value_path = $this->directory(self::ROWS) . DIRECTORY_SEPARATOR . $row . DIRECTORY_SEPARATOR . $hashed_name;
+                $value_path = Utility::evaluateFile("rows:$row:$hashed_name", self::API, $this->API);
                 // Get value & Hash it
                 $value = file_get_contents($value_path);
-                $hashed_value = Utils::hashMessage($value);
+                // Create hashed value
+                $hashed_value = Utility::hash($value);
                 // Remove path
                 unlink($value_path);
                 // Store new path
-                $index_path = $this->directory(self::COLUMNS) . DIRECTORY_SEPARATOR . $hashed_name . DIRECTORY_SEPARATOR . $hashed_value;
+                $index_path = Utility::evaluateFile("columns:$hashed_name:$hashed_value", self::API, $this->API);
                 // Make sure the index file exists
                 if (file_exists($index_path) && is_file($index_path)) {
                     // Read contents
@@ -478,9 +451,9 @@ class Database
         $isset = $this->isset($row, $column);
         if ($isset[0]) {
             // Generate hashed string
-            $hashed = Utils::hashMessage($column);
+            $hashed_name = Utility::hash($column);
             // Store path
-            $path = $this->directory(self::ROWS) . DIRECTORY_SEPARATOR . $row . DIRECTORY_SEPARATOR . $hashed;
+            $path = Utility::evaluateFile("rows:$row:$hashed_name", self::API, $this->API);
             // Read path
             return [true, file_get_contents($path)];
         }
@@ -501,11 +474,11 @@ class Database
         $has_column = $this->hasColumn($column);
         if ($has_column[0]) {
             // Create hashed string
-            $hashed_name = Utils::hashMessage($column);
+            $hashed_name = Utility::hash($column);
             // Create hashed string
-            $hashed_value = Utils::hashMessage($value);
+            $hashed_value = Utility::hash($value);
             // Store new path
-            $index_path = $this->directory(self::COLUMNS) . DIRECTORY_SEPARATOR . $hashed_name . DIRECTORY_SEPARATOR . $hashed_value;
+            $index_path = Utility::evaluateFile("columns:$hashed_name:$hashed_value", self::API, $this->API);
             // Make sure the index file exists
             if (file_exists($index_path) && is_file($index_path)) {
                 // Read contents
@@ -545,11 +518,11 @@ class Authority
     {
         $this->API = $API;
         // Create secret
-        $path = Utils::guestDirectory(self::API, $this->API) . DIRECTORY_SEPARATOR . "secret.key";
+        $path = Utility::evaluateFile("secret.key", self::API, $this->API);
         // Check existence
         if (!file_exists($path)) {
             // Create the secret file
-            file_put_contents($path, Utils::randomString(self::LENGTH));
+            file_put_contents($path, Utility::random(self::LENGTH));
         }
         // Read secret
         $this->secret = file_get_contents($path);
@@ -568,12 +541,12 @@ class Authority
         $token_object = new stdClass();
         $token_object->contents = $contents;
         $token_object->permissions = $permissions;
-        $token_object->issuer = Utils::hashMessage($this->API);
+        $token_object->issuer = Utility::hash($this->API);
         $token_object->expiry = time() + intval($validity);
         // Create token string
         $token_object_string = bin2hex(json_encode($token_object));
         // Calculate signature
-        $token_signature = Utils::signMessage($token_object_string, $this->secret);
+        $token_signature = Utility::sign($token_object_string, $this->secret);
         // Create parts
         $token_parts = [$token_object_string, $token_signature];
         // Combine all into token
@@ -599,13 +572,13 @@ class Authority
             $token_object_string = $token_parts[0];
             $token_signature = $token_parts[1];
             // Validate signature
-            if (Utils::signMessage($token_object_string, $this->secret) === $token_signature) {
+            if (Utility::sign($token_object_string, $this->secret) === $token_signature) {
                 // Parse token object
                 $token_object = json_decode(hex2bin($token_object_string));
                 // Validate existence
                 if (isset($token_object->contents) && isset($token_object->permissions) && isset($token_object->issuer) && isset($token_object->expiry)) {
                     // Validate issuer
-                    if ($token_object->issuer === Utils::hashMessage($this->API)) {
+                    if ($token_object->issuer === Utility::hash($this->API)) {
                         // Validate expiry
                         if (time() < $token_object->expiry) {
                             // Validate permissions
